@@ -2,6 +2,7 @@ import time
 
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 API_URL = "http://127.0.0.1:8000/runner"
 
@@ -123,57 +124,89 @@ st.divider()
 st.header("2. Track Task Status & Result")
 
 task_id_input = st.text_input("Enter Task ID to track:", value=st.session_state.get("task_id", ""))
+auto_refresh = st.checkbox("Auto-refresh terminal logs & status", value=True)
 
 if task_id_input:
-    col_status, col_result = st.columns(2)
-    
-    # 状态查询
-    with col_status:
-        if st.button("Refresh Status & Logs"):
-            try:
-                res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}")
-                if res.status_code == 200:
-                    data = res.json()
-                    st.write(f"**Status**: `{data['status']}`")
-                    st.write(f"**Current Step**: {data['current_step']}")
-                    st.write(f"**Updated At**: {data['updated_at']}")
-                    if data['error_message']:
-                        st.error(f"Error: {data['error_message']}")
+    status_container = st.empty()
+    result_container = st.empty()
+    st.subheader("Terminal Logs")
+    log_container = st.empty()
+
+    def fetch_and_update_status():
+        try:
+            res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}")
+            if res.status_code == 200:
+                data = res.json()
+                status_text = f"**Status**: `{data['status']}` | **Current Step**: {data['current_step']} | **Updated At**: {data['updated_at']}"
+                if data['error_message']:
+                    status_container.error(f"{status_text}\n\n**Error**: {data['error_message']}")
                 else:
-                    st.error("Task not found or error occurred.")
-            except Exception as e:
-                st.error(f"Error fetching status: {e}")
+                    status_container.info(status_text)
+                return data['status']
+            else:
+                status_container.error("Task not found or error occurred.")
+                return "ERROR"
+        except Exception as e:
+            status_container.error(f"Error fetching status: {e}")
+            return "ERROR"
+
+    def fetch_logs():
+        try:
+            log_res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}/logs")
+            if log_res.status_code == 200:
+                log_data = log_res.json()
+                lines = log_data.get("tail", [])
+                if not lines or all(not l.strip() for l in lines):
+                    lines = ["Waiting for logs to generate..."]
                 
-    # 结果查询
-    with col_result:
-        if st.button("Get Result"):
-            try:
-                res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}/result")
-                if res.status_code == 200:
-                    data = res.json()
-                    if data["status"] == "SUCCESS":
+                # 将日志行反转，并各自包裹在一个 div 中。
+                # 配合外层容器的 flex-direction: column-reverse，这样最新的日志就会紧贴在容器底部（自动置底）
+                reversed_lines = lines[::-1]
+                divs = "".join(f"<div>{line}</div>" for line in reversed_lines)
+                
+                # 使用 markdown 和 CSS 将原生的内容固定高度并支持滚动
+                html_code = f"""
+                <div style="
+                    background-color: #1e1e1e;
+                    color: #00ff00;
+                    font-family: monospace;
+                    height: 400px;
+                    overflow-y: auto;
+                    padding: 10px;
+                    border-radius: 5px;
+                    white-space: pre-wrap;
+                    font-size: 14px;
+                    display: flex;
+                    flex-direction: column-reverse;
+                ">
+                    {divs}
+                </div>
+                """
+                log_container.markdown(html_code, unsafe_allow_html=True)
+        except Exception as e:
+            log_container.error(f"Failed to fetch logs: {e}")
+            
+    def fetch_result():
+        try:
+            res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}/result")
+            if res.status_code == 200:
+                data = res.json()
+                if data["status"] == "SUCCESS":
+                    with result_container.container():
                         st.success("Evaluation Completed!")
                         st.json(data["metrics"])
                         st.info(f"Result Path: {data['paths']['raw_result_path']}")
-                    else:
-                        st.warning(f"Task is not SUCCESS yet. Current status: {data['status']}")
-                else:
-                    st.error("Result not available or task not found.")
-            except Exception as e:
-                st.error(f"Error fetching result: {e}")
+        except Exception:
+            pass
 
-    # 终端日志显示区
-    st.subheader("Terminal Logs")
-    log_container = st.empty()
+    # 初次加载
+    current_status = fetch_and_update_status()
+    fetch_logs()
     
-    try:
-        log_res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}/logs")
-        if log_res.status_code == 200:
-            log_data = log_res.json()
-            lines = log_data.get("tail", [])
-            log_text = "\n".join(lines)
-            if not log_text.strip():
-                log_text = "Waiting for logs to generate..."
-            log_container.code(log_text, language="bash")
-    except Exception as e:
-        log_container.error(f"Failed to fetch logs: {e}")
+    if current_status == "SUCCESS":
+        fetch_result()
+
+    # 自动轮询机制 (如果开启且任务未结束)
+    if auto_refresh and current_status in ["QUEUED", "RUNNING", "VALIDATING", "PARSING_RESULT"]:
+        time.sleep(2)
+        st.rerun()

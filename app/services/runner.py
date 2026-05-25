@@ -170,7 +170,7 @@ class RunnerService:
         }
 
     @staticmethod
-    def get_task_logs(task_id: str, tail_lines: int = 100) -> Optional[Dict[str, Any]]:
+    def get_task_logs(task_id: str, tail_lines: int = 1000) -> Optional[Dict[str, Any]]:
         """
         获取执行日志
         """
