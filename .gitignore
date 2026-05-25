@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+.env
+
+# 忽略缓存目录和结果输出目录，不要把它们提交到 Git
+.cache/
+result/
+
