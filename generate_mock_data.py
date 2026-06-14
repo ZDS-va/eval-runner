@@ -33,7 +33,7 @@ QUESTIONS = [
     }
 ]
 
-out_dir = Path("result/mock-task-12345/20260613_mock/reviews/mock-model")
+out_dir = Path("mock_data/mock-task-12345/20260613_mock/reviews/mock-model")
 out_dir.mkdir(parents=True, exist_ok=True)
 out_file = out_dir / "arc_ARC-Challenge.jsonl"
 

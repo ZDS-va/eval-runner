@@ -16,7 +16,7 @@ TASKS: Dict[str, Dict[str, Any]] = {
         "status": "SUCCESS",
         "model_service_id": "mock-model",
         "dataset": "arc",
-        "work_dir": "result/mock-task-12345",
+        "work_dir": "mock_data/mock-task-12345",
         "created_at": "2026-06-13T00:00:00Z",
         "updated_at": "2026-06-13T00:01:00Z",
         "current_step": "COMPLETED",
