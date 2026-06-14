@@ -42,6 +42,12 @@ def create_task(req: EvalTaskRequest, background_tasks: BackgroundTasks):
     }
 
 
+@router.get("/eval-tasks")
+def list_tasks():
+    """列出所有历史任务"""
+    tasks = RunnerService.list_tasks()
+    return {"tasks": tasks}
+
 @router.get("/eval-tasks/{task_id}")
 def get_task(task_id: str):
     """14.8 GET /runner/eval-tasks/{task_id} 查询任务基本状态"""

@@ -162,6 +162,16 @@ class RunnerService:
         return TASKS.get(task_id)
 
     @staticmethod
+    def list_tasks() -> list:
+        """
+        列出所有任务
+        """
+        # 返回按创建时间倒序排列的任务列表
+        tasks_list = list(TASKS.values())
+        tasks_list.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return tasks_list
+
+    @staticmethod
     def get_task_result(task_id: str) -> Optional[Dict[str, Any]]:
         """
         返回结构化评测结果
@@ -170,12 +180,37 @@ class RunnerService:
         if not task:
             return None
             
+        metrics = task.get("metrics", {})
+        work_dir = Path(task.get("work_dir", ""))
+        
+        # 尝试从真实的文件目录中解析 reports/*.json 指标
+        if work_dir.exists():
+            subdirs = [d for d in work_dir.iterdir() if d.is_dir() and (d.name.isdigit() or d.name.startswith("202"))]
+            if subdirs:
+                latest_dir = sorted(subdirs)[-1]
+                reports_dir = latest_dir / "reports"
+                
+                if reports_dir.exists():
+                    real_metrics = {}
+                    # 遍历所有的 reports 的 json 文件（通常包含具体的 score 等指标）
+                    for json_file in reports_dir.rglob("*.json"):
+                        try:
+                            with open(json_file, "r", encoding="utf-8") as f:
+                                data = json.load(f)
+                                # 用文件名作为 key 存入 metrics 中
+                                real_metrics[json_file.stem] = data
+                        except Exception:
+                            pass
+                    
+                    if real_metrics:
+                        metrics = real_metrics
+                        
         return {
             "task_id": task["task_id"],
             "status": task["status"],
             "model_service_id": task["model_service_id"],
             "dataset": task["dataset"],
-            "metrics": task.get("metrics", {}),
+            "metrics": metrics,
             "failed_cases": [],
             "paths": {
                 "raw_result_path": task.get("raw_result_path", f"{task['work_dir']}/reports/raw.json"),

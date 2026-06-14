@@ -123,14 +123,36 @@ st.divider()
 # ================= 状态与结果查询区 =================
 st.header("2. Track Task Status & Result")
 
-task_id_input = st.text_input("Enter Task ID to track:", value=st.session_state.get("task_id", ""))
+# 获取历史任务列表
+history_tasks = []
+try:
+    res_tasks = requests.get(f"{API_URL}/eval-tasks", timeout=2)
+    if res_tasks.status_code == 200:
+        history_tasks = res_tasks.json().get("tasks", [])
+except Exception:
+    pass
+
+task_options = ["-- Enter Manually --"] + [f"{t['task_id']} ({t['model_service_id']} - {t['status']})" for t in history_tasks]
+selected_option = st.selectbox("Select a recent task to view:", task_options)
+
+default_task_id = st.session_state.get("task_id", "")
+if selected_option != "-- Enter Manually --":
+    default_task_id = selected_option.split(" ")[0]
+
+task_id_input = st.text_input("Enter Task ID to track:", value=default_task_id)
 auto_refresh = st.checkbox("Auto-refresh terminal logs & status", value=True)
 
 if task_id_input:
     status_container = st.empty()
-    result_container = st.empty()
-    st.subheader("Terminal Logs")
-    log_container = st.empty()
+    
+    tab1, tab2, tab3 = st.tabs(["Terminal Logs", "Evaluation Result", "HTML Report Info"])
+    
+    with tab1:
+        log_container = st.empty()
+    with tab2:
+        result_container = st.empty()
+    with tab3:
+        report_container = st.empty()
 
     def fetch_and_update_status():
         try:
@@ -196,6 +218,20 @@ if task_id_input:
                         st.success("Evaluation Completed!")
                         st.json(data["metrics"])
                         st.info(f"Result Path: {data['paths']['raw_result_path']}")
+                else:
+                    with result_container.container():
+                        st.info("Evaluation is not completed yet.")
+        except Exception as e:
+            result_container.error(f"Failed to fetch result: {e}")
+
+    def fetch_report():
+        try:
+            res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}/report")
+            if res.status_code == 200:
+                data = res.json()
+                with report_container.container():
+                    st.write("**Report Path:**", data.get("report_path"))
+                    st.json(data)
         except Exception:
             pass
 
@@ -205,6 +241,7 @@ if task_id_input:
     
     if current_status == "SUCCESS":
         fetch_result()
+        fetch_report()
 
     # 自动轮询机制 (如果开启且任务未结束)
     if auto_refresh and current_status in ["QUEUED", "RUNNING", "VALIDATING", "PARSING_RESULT"]:
