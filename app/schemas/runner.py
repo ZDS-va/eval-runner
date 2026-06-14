@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field
 
@@ -76,3 +76,40 @@ class CreateTaskResponse(BaseModel):
     status: TaskStatus
     work_dir: str
     created_at: str
+
+class Pagination(BaseModel):
+    limit: int
+    offset: int
+    total: int
+    returned: int
+    has_more: bool
+    next_offset: Optional[int] = None
+
+class TruncatedInfo(BaseModel):
+    prompt: bool = False
+    prediction: bool = False
+
+class BadCaseItem(BaseModel):
+    case_id: str
+    index: int
+    subset: str
+    prompt: str
+    target: str
+    prediction: str
+    extracted_prediction: str
+    correct: bool
+    scores: Dict[str, float]
+    perf_metrics: Dict[str, Any]
+    sample_metadata: Dict[str, Any]
+    truncated: TruncatedInfo
+
+class BadCasesResponse(BaseModel):
+    task_id: str
+    status: str
+    model_service_id: str
+    dataset: str
+    source: str = "real"
+    filters: Dict[str, Any] = {}
+    pagination: Pagination
+    items: List[BadCaseItem]
+    warnings: List[str] = []

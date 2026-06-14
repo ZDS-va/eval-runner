@@ -1,9 +1,11 @@
 import datetime
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from typing import Optional
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
-from app.schemas.runner import CreateTaskResponse, EvalTaskRequest, ValidateResponse
+from app.schemas.runner import CreateTaskResponse, EvalTaskRequest, ValidateResponse, BadCasesResponse
 from app.services.runner import RunnerService
+
 
 router = APIRouter()
 
@@ -83,3 +85,29 @@ def get_task_report(task_id: str):
     if not report:
         raise HTTPException(status_code=404, detail="Task not found")
     return report
+
+@router.get("/eval-tasks/{task_id}/bad-cases", response_model=BadCasesResponse)
+def get_task_bad_cases(
+    task_id: str,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    subset: Optional[str] = Query(None, description="Filter by subset name, e.g., ARC-Challenge")
+):
+    """分页获取任务错题集，供 Agent 分析"""
+    bad_cases = RunnerService.get_task_bad_cases(task_id, limit, offset, subset)
+    if not bad_cases:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return bad_cases
+
+@router.get("/eval-tasks/{task_id}/bad-cases", response_model=BadCasesResponse)
+def get_task_bad_cases(
+    task_id: str,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    subset: Optional[str] = Query(None, description="Filter by subset name, e.g., ARC-Challenge")
+):
+    """分页获取任务错题集，供 Agent 分析"""
+    bad_cases = RunnerService.get_task_bad_cases(task_id, limit, offset, subset)
+    if not bad_cases:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return bad_cases
