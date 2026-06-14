@@ -27,10 +27,10 @@ st.header("1. Submit Evaluation Task")
 st.subheader("Model Config")
 col1, col2 = st.columns(2)
 with col1:
-    model_name = st.text_input("Model Name", value="qwen-7b")
-    model_service_id = st.text_input("Service ID", value="model-service-001")
+    model_name = st.text_input("Model Name", value="gemini-3.1-flash-lite")
+    model_service_id = st.text_input("Service ID", value="gemini-3.1-flash-lite")
 with col2:
-    api_url = st.text_input("API URL", value="http://modelhub-gateway/v1")
+    api_url = st.text_input("API URL", value="https://api.vectorengine.ai/v1/chat/completions")
     api_key = st.text_input("API Key", value="EMPTY", type="password")
 
 if st.button("🔌 Test API Connection"):
@@ -145,7 +145,7 @@ auto_refresh = st.checkbox("Auto-refresh terminal logs & status", value=True)
 if task_id_input:
     status_container = st.empty()
     
-    tab1, tab2, tab3 = st.tabs(["Terminal Logs", "Evaluation Result", "HTML Report Info"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Terminal Logs", "Evaluation Result", "HTML Report Info", "Bad Cases"])
     
     with tab1:
         log_container = st.empty()
@@ -153,6 +153,15 @@ if task_id_input:
         result_container = st.empty()
     with tab3:
         report_container = st.empty()
+    with tab4:
+        st.subheader("Bad Cases Pagination")
+        col_limit, col_offset = st.columns(2)
+        with col_limit:
+            bc_limit = st.number_input("Limit (Items per page)", min_value=1, max_value=100, value=20, key=f"bc_limit_{task_id_input}")
+        with col_offset:
+            bc_offset = st.number_input("Offset (Skip items)", min_value=0, value=0, key=f"bc_offset_{task_id_input}")
+        
+        bad_cases_container = st.empty()
 
     def fetch_and_update_status():
         try:
@@ -235,6 +244,25 @@ if task_id_input:
         except Exception:
             pass
 
+    def fetch_bad_cases():
+        try:
+            res = requests.get(f"{API_URL}/eval-tasks/{task_id_input}/bad-cases", params={"limit": bc_limit, "offset": bc_offset})
+            if res.status_code == 200:
+                data = res.json()
+                with bad_cases_container.container():
+                    pagination = data.get('pagination', {})
+                    st.write(f"**Total Bad Cases:** {pagination.get('total', 0)} | **Showing:** {pagination.get('returned', 0)} items (Offset: {pagination.get('offset', 0)})")
+                    
+                    if pagination.get('has_more'):
+                        st.info(f"💡 There are more bad cases. Increase offset to {pagination.get('next_offset')} to view next page.")
+                        
+                    st.json(data.get("items", []))
+            elif res.status_code == 404:
+                with bad_cases_container.container():
+                    st.info("No bad cases found for this task.")
+        except Exception as e:
+            bad_cases_container.error(f"Failed to fetch bad cases: {e}")
+
     # 初次加载
     current_status = fetch_and_update_status()
     fetch_logs()
@@ -242,6 +270,7 @@ if task_id_input:
     if current_status == "SUCCESS":
         fetch_result()
         fetch_report()
+        fetch_bad_cases()
 
     # 自动轮询机制 (如果开启且任务未结束)
     if auto_refresh and current_status in ["QUEUED", "RUNNING", "VALIDATING", "PARSING_RESULT"]:

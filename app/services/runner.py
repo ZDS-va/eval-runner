@@ -8,22 +8,46 @@ from typing import Any, Dict, Optional
 
 from app.schemas.runner import EvalTaskRequest, TaskStatus
 
-# MVP 阶段使用内存存储任务状态，实际生产应替换为 Redis 或 Database
-TASKS: Dict[str, Dict[str, Any]] = {
+DB_PATH = Path("result/tasks_db.json")
+
+def load_tasks() -> Dict[str, Dict[str, Any]]:
     # 预置一个专门用于测试分页错题的 Mock 任务
-    "mock-task-12345": {
-        "task_id": "mock-task-12345",
-        "status": "SUCCESS",
-        "model_service_id": "mock-model",
-        "dataset": "arc",
-        "work_dir": "mock_data/mock-task-12345",
-        "created_at": "2026-06-13T00:00:00Z",
-        "updated_at": "2026-06-13T00:01:00Z",
-        "current_step": "COMPLETED",
-        "error_message": None,
-        "config": {}
+    default_tasks = {
+        "mock-task-12345": {
+            "task_id": "mock-task-12345",
+            "status": "SUCCESS",
+            "model_service_id": "mock-model",
+            "dataset": "arc",
+            "work_dir": "mock_data/mock-task-12345",
+            "created_at": "2026-06-13T00:00:00Z",
+            "updated_at": "2026-06-13T00:01:00Z",
+            "current_step": "COMPLETED",
+            "error_message": None,
+            "config": {}
+        }
     }
-}
+    
+    if DB_PATH.exists():
+        try:
+            with open(DB_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # 始终确保 mock-task-12345 存在
+                data["mock-task-12345"] = default_tasks["mock-task-12345"]
+                return data
+        except Exception:
+            pass
+    return default_tasks
+
+def save_tasks(tasks_dict: Dict[str, Dict[str, Any]]):
+    try:
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(DB_PATH, "w", encoding="utf-8") as f:
+            json.dump(tasks_dict, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+# MVP 阶段使用基于本地 JSON 持久化的字典存储任务状态
+TASKS: Dict[str, Dict[str, Any]] = load_tasks()
 
 
 class RunnerService:
@@ -51,6 +75,7 @@ class RunnerService:
         task["status"] = TaskStatus.RUNNING
         task["current_step"] = "EVALUATING"
         task["updated_at"] = datetime.now(timezone.utc).isoformat()
+        save_tasks(TASKS)
 
         try:
             work_dir = Path(config.output.work_dir)
@@ -128,6 +153,7 @@ class RunnerService:
             task["error_message"] = str(e)
         finally:
             task["updated_at"] = datetime.now(timezone.utc).isoformat()
+            save_tasks(TASKS)
 
     @staticmethod
     def create_task(config: EvalTaskRequest, background_tasks) -> str:
@@ -149,6 +175,8 @@ class RunnerService:
             "error_message": None,
             "config": config.model_dump(by_alias=True)
         }
+        
+        save_tasks(TASKS)
         
         # 将实际执行抛入后台任务
         background_tasks.add_task(RunnerService._execute_task_async, task_id, config)
@@ -185,7 +213,19 @@ class RunnerService:
         
         # 尝试从真实的文件目录中解析 reports/*.json 指标
         if work_dir.exists():
-            subdirs = [d for d in work_dir.iterdir() if d.is_dir() and (d.name.isdigit() or d.name.startswith("202"))]
+            # 过滤出可能是 EvalScope 生成的时间戳文件夹：
+            # 1. 纯数字（比如老版本可能是纯时间戳）
+            # 2. 包含下划线，且前半部分是 8 位数字（如 20260613_232648 或 20260613_mock）
+            def is_eval_dir(d_name: str) -> bool:
+                if d_name.isdigit():
+                    return True
+                if "_" in d_name:
+                    parts = d_name.split("_", 1)
+                    if len(parts[0]) == 8 and parts[0].isdigit():
+                        return True
+                return False
+                
+            subdirs = [d for d in work_dir.iterdir() if d.is_dir() and is_eval_dir(d.name)]
             if subdirs:
                 latest_dir = sorted(subdirs)[-1]
                 reports_dir = latest_dir / "reports"
@@ -263,7 +303,19 @@ class RunnerService:
         
         # 查找最新的 timestamp 文件夹
         if work_dir.exists():
-            subdirs = [d for d in work_dir.iterdir() if d.is_dir() and d.name.isdigit() or d.name.startswith("202")]
+            # 过滤出可能是 EvalScope 生成的时间戳文件夹：
+            # 1. 纯数字（比如老版本可能是纯时间戳）
+            # 2. 包含下划线，且前半部分是 8 位数字（如 20260613_232648 或 20260613_mock）
+            def is_eval_dir(d_name: str) -> bool:
+                if d_name.isdigit():
+                    return True
+                if "_" in d_name:
+                    parts = d_name.split("_", 1)
+                    if len(parts[0]) == 8 and parts[0].isdigit():
+                        return True
+                return False
+                
+            subdirs = [d for d in work_dir.iterdir() if d.is_dir() and is_eval_dir(d.name)]
             if subdirs:
                 latest_dir = sorted(subdirs)[-1]
                 reviews_dir = latest_dir / "reviews"
