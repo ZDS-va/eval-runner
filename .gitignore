@@ -10,3 +10,7 @@ __pycache__/
 .cache/
 result/
 
+# 豁免模拟错题集目录，使其能够被部署
+!result/mock-task-12345/
+!result/mock-task-12345/**
+
