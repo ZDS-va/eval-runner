@@ -1,0 +1,8 @@
+2026-06-14 10:00:00,000 - evalscope - INFO - Starting evaluation task: mock-failed-timeout
+2026-06-14 10:00:01,234 - evalscope - INFO - Loading dataset: custom-qa
+2026-06-14 10:00:02,512 - evalscope - INFO - Dataset loaded successfully. 100 samples found.
+2026-06-14 10:00:03,000 - evalscope - INFO - Connecting to model service endpoint...
+2026-06-14 10:00:04,111 - evalscope - INFO - Starting prediction phase.
+2026-06-14 10:00:05,222 - evalscope - INFO - Evaluating sample 1/100...
+2026-06-14 10:01:05,230 - evalscope - ERROR - TimeoutError: The read operation timed out after 60 seconds while waiting for model response.
+2026-06-14 10:01:05,235 - evalscope - ERROR - EvalScope Execution Failed due to Timeout.

@@ -1,0 +1,6 @@
+2026-06-14 10:20:00,000 - evalscope - INFO - Starting evaluation task: mock-failed-network
+2026-06-14 10:20:01,100 - evalscope - INFO - Loading dataset: ceval
+2026-06-14 10:20:02,200 - evalscope - INFO - Resolving model service endpoint: http://internal-model-gateway.local/v1
+2026-06-14 10:20:07,300 - evalscope - ERROR - ConnectionError: HTTPSConnectionPool(host='internal-model-gateway.local', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+2026-06-14 10:20:07,305 - evalscope - ERROR - Could not connect to the specified API URL. Please check your network settings and endpoint address.
+2026-06-14 10:20:07,310 - evalscope - ERROR - EvalScope Execution Failed due to Network Connectivity Issue.

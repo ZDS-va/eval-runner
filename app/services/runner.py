@@ -11,7 +11,7 @@ from app.schemas.runner import EvalTaskRequest, TaskStatus
 DB_PATH = Path("result/tasks_db.json")
 
 def load_tasks() -> Dict[str, Dict[str, Any]]:
-    # 预置一个专门用于测试分页错题的 Mock 任务
+    # 预置一些用于 Agent 诊断的 Mock 任务
     default_tasks = {
         "mock-task-12345": {
             "task_id": "mock-task-12345",
@@ -24,6 +24,66 @@ def load_tasks() -> Dict[str, Dict[str, Any]]:
             "current_step": "COMPLETED",
             "error_message": None,
             "config": {}
+        },
+        "mock-failed-timeout": {
+            "task_id": "mock-failed-timeout",
+            "status": "FAILED",
+            "model_service_id": "mock-model-timeout",
+            "dataset": "custom-qa",
+            "work_dir": "mock_data/mock-failed-timeout",
+            "created_at": "2026-06-14T10:00:00Z",
+            "updated_at": "2026-06-14T10:01:05Z",
+            "current_step": "EVALUATING",
+            "error_message": "TimeoutError: The read operation timed out after 60 seconds while waiting for model response.",
+            "config": {}
+        },
+        "mock-failed-auth": {
+            "task_id": "mock-failed-auth",
+            "status": "FAILED",
+            "model_service_id": "mock-model-auth",
+            "dataset": "gsm8k",
+            "work_dir": "mock_data/mock-failed-auth",
+            "created_at": "2026-06-14T10:05:00Z",
+            "updated_at": "2026-06-14T10:05:03Z",
+            "current_step": "EVALUATING",
+            "error_message": "AuthenticationError: HTTP 401 Unauthorized. Invalid API Key provided.",
+            "config": {}
+        },
+        "mock-failed-dataset-format": {
+            "task_id": "mock-failed-dataset-format",
+            "status": "FAILED",
+            "model_service_id": "mock-model-dataset",
+            "dataset": "broken_dataset",
+            "work_dir": "mock_data/mock-failed-dataset-format",
+            "created_at": "2026-06-14T10:10:00Z",
+            "updated_at": "2026-06-14T10:10:01Z",
+            "current_step": "EVALUATING",
+            "error_message": "JSONDecodeError: Expecting property name enclosed in double quotes. Failed to parse dataset file.",
+            "config": {}
+        },
+        "mock-failed-model-output": {
+            "task_id": "mock-failed-model-output",
+            "status": "FAILED",
+            "model_service_id": "mock-model-output",
+            "dataset": "mmlu",
+            "work_dir": "mock_data/mock-failed-model-output",
+            "created_at": "2026-06-14T10:15:00Z",
+            "updated_at": "2026-06-14T10:15:13Z",
+            "current_step": "EVALUATING",
+            "error_message": "OutputFormatError: The model consistently failed to generate outputs matching the required extraction pattern.",
+            "config": {}
+        },
+        "mock-failed-network": {
+            "task_id": "mock-failed-network",
+            "status": "FAILED",
+            "model_service_id": "mock-model-network",
+            "dataset": "ceval",
+            "work_dir": "mock_data/mock-failed-network",
+            "created_at": "2026-06-14T10:20:00Z",
+            "updated_at": "2026-06-14T10:20:07Z",
+            "current_step": "EVALUATING",
+            "error_message": "ConnectionError: Failed to establish a new connection. Name or service not known.",
+            "config": {}
         }
     }
     
@@ -31,8 +91,9 @@ def load_tasks() -> Dict[str, Dict[str, Any]]:
         try:
             with open(DB_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # 始终确保 mock-task-12345 存在
-                data["mock-task-12345"] = default_tasks["mock-task-12345"]
+                # 始终确保所有的 mock 任务存在
+                for k, v in default_tasks.items():
+                    data[k] = v
                 return data
         except Exception:
             pass

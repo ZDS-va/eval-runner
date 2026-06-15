@@ -1,0 +1,83 @@
+{
+    "name": "mock-model@arc",
+    "dataset_name": "arc",
+    "dataset_pretty_name": "ARC",
+    "dataset_description": "\n## Overview\n\nARC (AI2 Reasoning Challenge) is a benchmark designed to evaluate science question answering capabilities of AI models.\n\n## Mock Report Data\n\nThis is a mock report containing 120 total evaluated samples, with an overall accuracy of 47.5%. Among them, there are 57 incorrect cases generated for testing the bad case pagination API.\n",
+    "model_name": "mock-model",
+    "score": 0.475,
+    "metrics": [
+        {
+            "name": "mean_acc",
+            "num": 120,
+            "score": 0.475,
+            "macro_score": 0.475,
+            "categories": [
+                {
+                    "name": [
+                        "default"
+                    ],
+                    "num": 120,
+                    "score": 0.475,
+                    "macro_score": 0.475,
+                    "subsets": [
+                        {
+                            "name": "ARC-Easy",
+                            "score": 0.52,
+                            "num": 50
+                        },
+                        {
+                            "name": "ARC-Challenge",
+                            "score": 0.4428,
+                            "num": 70
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "analysis": "N/A",
+    "perf_metrics": {
+        "summary": {
+            "n_samples": 120,
+            "latency": {
+                "mean": 2.103421,
+                "std": 0.859152,
+                "min": 1.093735,
+                "25%": 1.480231,
+                "50%": 1.948481,
+                "75%": 2.587831,
+                "90%": 3.18921,
+                "99%": 3.8318,
+                "max": 4.680976
+            },
+            "throughput": {
+                "avg_output_tps": 1.48,
+                "avg_req_ps": 0.4854
+            },
+            "usage": {
+                "input_tokens": {
+                    "mean": 105.875,
+                    "std": 18.859776,
+                    "min": 70.0,
+                    "max": 140.0
+                },
+                "output_tokens": {
+                    "mean": 3.0,
+                    "std": 0.0,
+                    "min": 3.0,
+                    "max": 3.0
+                },
+                "total_tokens": {
+                    "mean": 108.875,
+                    "std": 18.859776,
+                    "min": 73.0,
+                    "max": 143.0
+                },
+                "total_input_tokens": 12705,
+                "total_output_tokens": 360,
+                "total_tokens_count": 13065
+            }
+        }
+    },
+    "num": 120
+}

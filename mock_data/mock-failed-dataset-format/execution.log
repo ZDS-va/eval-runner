@@ -1,0 +1,5 @@
+2026-06-14 10:10:00,000 - evalscope - INFO - Starting evaluation task: mock-failed-dataset-format
+2026-06-14 10:10:01,050 - evalscope - INFO - Attempting to load dataset from path: /mnt/datasets/broken_dataset.jsonl
+2026-06-14 10:10:01,120 - evalscope - ERROR - JSONDecodeError: Expecting property name enclosed in double quotes: line 42 column 15 (char 1024)
+2026-06-14 10:10:01,125 - evalscope - ERROR - Failed to parse dataset file. Ensure it strictly follows the required JSONL schema with 'prompt' and 'target' fields.
+2026-06-14 10:10:01,130 - evalscope - ERROR - EvalScope Execution Failed due to Invalid Dataset Format.

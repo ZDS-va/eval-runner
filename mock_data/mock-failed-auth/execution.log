@@ -1,0 +1,7 @@
+2026-06-14 10:05:00,000 - evalscope - INFO - Starting evaluation task: mock-failed-auth
+2026-06-14 10:05:01,111 - evalscope - INFO - Loading dataset: gsm8k
+2026-06-14 10:05:02,222 - evalscope - INFO - Dataset loaded successfully.
+2026-06-14 10:05:02,500 - evalscope - INFO - Verifying model API credentials...
+2026-06-14 10:05:03,100 - evalscope - ERROR - AuthenticationError: HTTP 401 Unauthorized. 
+2026-06-14 10:05:03,105 - evalscope - ERROR - Details: "Invalid API Key provided or token expired."
+2026-06-14 10:05:03,110 - evalscope - ERROR - EvalScope Execution Failed due to Authentication Failure.

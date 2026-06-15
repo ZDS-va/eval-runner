@@ -1,0 +1,10 @@
+2026-06-14 10:15:00,000 - evalscope - INFO - Starting evaluation task: mock-failed-model-output
+2026-06-14 10:15:01,200 - evalscope - INFO - Loading dataset: mmlu
+2026-06-14 10:15:02,300 - evalscope - INFO - Connecting to model service...
+2026-06-14 10:15:03,400 - evalscope - INFO - Starting prediction phase.
+2026-06-14 10:15:05,000 - evalscope - INFO - Evaluating sample 1/50...
+2026-06-14 10:15:08,000 - evalscope - WARNING - Model returned unexpected format for sample 1: "I'm sorry, but as an AI language model, I cannot answer this question."
+2026-06-14 10:15:10,000 - evalscope - INFO - Evaluating sample 2/50...
+2026-06-14 10:15:13,000 - evalscope - WARNING - Model returned unexpected format for sample 2: "I apologize, but I don't have enough context."
+2026-06-14 10:15:13,500 - evalscope - ERROR - OutputFormatError: The model consistently failed to generate outputs matching the required extraction pattern (e.g., 'ANSWER: [X]').
+2026-06-14 10:15:13,505 - evalscope - ERROR - EvalScope Execution Failed due to unparseable model outputs.
